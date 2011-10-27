@@ -2,6 +2,7 @@
 #define __STEP_DEFINITIONS_H
 
 void initial_permutation(const unsigned char[], unsigned char[]);
+void round(unsigned char[], const unsigned char[], const bool, const bool, unsigned char *&, unsigned char *&);
 void feistel(const unsigned char[], const unsigned char[], unsigned char[]);
 void enlarge_permutation(const unsigned char[], unsigned char[]);
 void exclusive_or(const unsigned char[], const unsigned char[], const int, unsigned char[]);

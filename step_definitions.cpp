@@ -2,6 +2,7 @@
 #include "table.h"
 #include "string.h"
 #include "step_definitions.h"
+#include "functions.h"
 #include <iostream>
 
 #define GET_BITS_IN_INT(data, size, n) ((data & (0b11111111 >> (8 - size) << (sizeof(data) * 8 + 1 - size - n))) >> (sizeof(data) * 8 + 1 - size - n))
@@ -10,6 +11,31 @@ void initial_permutation(const unsigned char data[], unsigned char result[])
 {
 	const int table_ip[64] = TABLE_IP;
 	permutation(table_ip, 64, data, result);
+}
+
+void round(unsigned char cleartext[], const unsigned char key[], const bool is_encrypt, const bool is_reset, unsigned char *&left_out, unsigned char *&right_out)
+{
+	static int times = 0;
+	static unsigned char *left, *right;
+
+	if(is_reset) times = 0;
+
+	if(times == 0)
+	{
+		left = cleartext;
+		right = &cleartext[4];
+	}
+
+	if(times++ < 16)
+	{
+		unsigned char subkey[6], data_out[4], *temp_pointer;
+		bool is_reset_subkey = false;
+		if(times == 1) is_reset_subkey = true;
+		generate_subkey(key, subkey, is_encrypt, is_reset_subkey);
+		feistel(right, subkey, data_out);
+		exclusive_or(left, data_out, 4, left);
+		temp_pointer = left; left = right; right = temp_pointer; left_out = left; right_out = right;
+	}
 }
 
 void feistel(const unsigned char data_in[], const unsigned char subkey[], unsigned char data_out[])
@@ -32,14 +58,6 @@ void exclusive_or(const unsigned char data_1[], const unsigned char data_2[], co
 	for(int i = 0; i < size; ++i)
 	{
 		data_out[i] = data_1[i] ^ data_2[i];
-	}
-}
-
-void exclusive_or(unsigned char data_1[], const unsigned char data_2[], const int size)
-{
-	for(int i = 0; i < size; ++i)
-	{
-		data_1[i] ^= data_2[i];
 	}
 }
 

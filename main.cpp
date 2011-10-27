@@ -184,15 +184,90 @@
 // 	return 0;
 // }
 
+// int main(int argc, const char *argv[])
+// {
+// 	unsigned char cleartext[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+// 	unsigned char keys[8] = {11, 12, 13, 14, 15, 16, 17, 18}, *left, *right;
+// 
+// 	for(int i = 1; i <= 16; ++i)
+// 	{
+// 		std::cout << i << ":\n" ;
+// 		round(cleartext, keys, true, false, left, right);
+// 
+// 		std::cout << "\tleft:\n" ;
+// 		for(int y = 0; y < 4; ++y)
+// 		{
+// 			for(int x = 7; x >= 0; --x)
+// 			{
+// 				std::cout << ((left[y] >> x) & 1) << ' ';
+// 			}
+// 			std::cout << '\n';
+// 		}
+// 		std::cout << std::endl;
+// 		std::cout << "\tright:\n" ;
+// 		for(int y = 0; y < 4; ++y)
+// 		{
+// 			for(int x = 7; x >= 0; --x)
+// 			{
+// 				std::cout << ((right[y] >> x) & 1) << ' ';
+// 			}
+// 			std::cout << '\n';
+// 		}
+// 		std::cout << std::endl;
+// 	}
+// 
+// 	std::cout << "cleartext:\n";
+// 	for(int y = 0; y < 8; ++y)
+// 	{
+// 		for(int x = 7; x >= 0; --x)
+// 		{
+// 			std::cout << ((cleartext[y] >> x) & 1) << ' ';
+// 		}
+// 		std::cout << '\n';
+// 	}
+// 	std::cout << std::endl;
+// 	return 0;
+// }
+
 int main(int argc, const char *argv[])
 {
 	unsigned char cleartext[8] = {1, 2, 3, 4, 5, 6, 7, 8};
-	unsigned char keys[8] = {11, 12, 13, 14, 15, 16, 17, 18}, left[4], right[4];
+	unsigned char key[8] = {11, 12, 13, 14, 15, 16, 17, 18}, result[8], result2[8];
 
-	for(int i = 0; i < 16; ++i)
+	for(int y = 0; y < 8; ++y)
 	{
-		std::cout << i << ":\n" ;
-		round(cleartext, keys, false, left, right);
+		for(int x = 7; x >= 0; --x)
+		{
+			std::cout << ((cleartext[y] >> x) & 1) << ' ';
+		}
+		std::cout << '\n';
 	}
+	std::cout << std::endl;
+	std::cout << std::endl;
+
+	encrypt(cleartext, key, true, result);
+
+	for(int y = 0; y < 8; ++y)
+	{
+		for(int x = 7; x >= 0; --x)
+		{
+			std::cout << ((result[y] >> x) & 1) << ' ';
+		}
+		std::cout << '\n';
+	}
+	std::cout << std::endl;
+
+	encrypt(result, key, false, result2);
+
+	for(int y = 0; y < 8; ++y)
+	{
+		for(int x = 7; x >= 0; --x)
+		{
+			std::cout << ((result2[y] >> x) & 1) << ' ';
+		}
+		std::cout << '\n';
+	}
+	std::cout << std::endl;
+	
 	return 0;
 }

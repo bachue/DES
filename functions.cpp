@@ -1,32 +1,25 @@
 #include "step_definitions.h"
 #include "functions.h"
 
-void round(const unsigned char cleartext[], const unsigned char key[], bool is_reset, unsigned char *&left_out, unsigned char *&right_out)
+void encrypt(const unsigned char cleartext[], const unsigned char key[], const bool is_encrypt, unsigned char result[])
 {
-	static int times = 0;
-	static unsigned char *left, *right;
-
-	if(is_reset) times = 0;
-
-	if(times == 0)
+	unsigned char *left, *right;
+	unsigned char after_initial_permutation[8];
+	initial_permutation(cleartext, after_initial_permutation);
+	for(int i = 0; i < 16; ++i)
 	{
-		left = cleartext;
-		right = cleartext[4];
+		round(after_initial_permutation, key, is_encrypt, false, left, right);
 	}
-
-	if(times++ < 16)
+	for(int i = 0; i < 4; ++i)
 	{
-		unsigned char subkey[6], data_out[4];
-		bool is_reset = false;
-		if(times == 1) is_reset = true;
-		generate_subkey(key, subkey, is_reset);
-		feistel(right, subkey, data_out);
-		exclusive_or(left, data_out, 4);
-		data_out = left; left = right; right = data_out; left_out = left; right_out = right;
+		char tmp = after_initial_permutation[i]; 
+		after_initial_permutation[i] = after_initial_permutation[i + 4]; 
+		after_initial_permutation[i + 4] = tmp;
 	}
+	final_permutation(after_initial_permutation, result);
 }
 
-void generate_subkey(const unsigned char key[], unsigned char subkey[], bool is_reset)
+void generate_subkey(const unsigned char key[], unsigned char subkey[], const bool is_encrypt, const bool is_reset)
 {
 	static int times = 0;
 	static unsigned char data[7];
@@ -41,7 +34,8 @@ void generate_subkey(const unsigned char key[], unsigned char subkey[], bool is_
 	if(times++ < 16)
 	{
 		unsigned char shifted_data[7];
-		ring_shift_left(times, data, shifted_data);
+		if(is_encrypt) ring_shift_left(times, data, shifted_data);
+		else ring_shift_left(15 - times, data, shifted_data);
 		compress_permutation(shifted_data, subkey);
 	}
 }
