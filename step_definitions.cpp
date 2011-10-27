@@ -1,12 +1,10 @@
 #include "lib.h"
 #include "table.h"
 #include "string.h"
-// #include <iostream>
+#include "step_definitions.h"
+#include <iostream>
 
-#define GET_BIT(data, n) ((data & (1 << (8 - n))) >> (8 - n))
-#define GET_2BIT(data, n) ((data & (0b11 << (7 - n))) >> (7 - n))
-#define GET_BYTE_IN_INT(data, n) ((data & (0b11111111 << (24 - n))) >> (24 - n))
-#define GET_4BIT_IN_INT(data, n) ((data & (0b1111 << (28 - n))) >> (28 - n))
+#define GET_BITS_IN_INT(data, size, n) ((data & (0b11111111 >> (8 - size) << (sizeof(data) * 8 + 1 - size - n))) >> (sizeof(data) * 8 + 1 - size - n))
 
 void initial_permutation(const unsigned char data[], unsigned char result[])
 {
@@ -14,10 +12,35 @@ void initial_permutation(const unsigned char data[], unsigned char result[])
 	permutation(table_ip, 64, data, result);
 }
 
+void feistel(const unsigned char data_in[], const unsigned char subkey[], unsigned char data_out[])
+{
+	unsigned char after_enlarge_permutation_data[48], after_exclusive_or_data[48], after_select_permutation_data[32];
+	enlarge_permutation(data_in, after_enlarge_permutation_data);
+	exclusive_or(after_enlarge_permutation_data, subkey, 6, after_exclusive_or_data);
+	select_permutation(after_exclusive_or_data, after_select_permutation_data);
+	pure_permutation(after_select_permutation_data, data_out);
+}
+
 void enlarge_permutation(const unsigned char data[], unsigned char result[])
 {
 	const int table_e[48] = TABLE_E;
 	permutation(table_e, 48, data, result);
+}
+
+void exclusive_or(const unsigned char data_1[], const unsigned char data_2[], const int size, unsigned char data_out[])
+{
+	for(int i = 0; i < size; ++i)
+	{
+		data_out[i] = data_1[i] ^ data_2[i];
+	}
+}
+
+void exclusive_or(unsigned char data_1[], const unsigned char data_2[], const int size)
+{
+	for(int i = 0; i < size; ++i)
+	{
+		data_1[i] ^= data_2[i];
+	}
 }
 
 void select_permutation(const unsigned char data[], unsigned char result[])
@@ -64,12 +87,12 @@ void select_change_permutation(const unsigned char data[], unsigned char result[
 void ring_shift_left(const int n, const unsigned char data[], unsigned char result[])
 {
 	const int table_rsl[16] = TABLE_RSL;
-	const int result_offset[] = {4, 12, 20, 0, 8, 16, 24};
+	const int result_offset[] = {5, 13, 21, 1, 9, 17, 25};
 	memset(result, 0, 7);
 
 	unsigned temp_var = 0, temp_c;
-	if(table_rsl[n] == 1) temp_c = GET_BIT(data[0], 5);
-	else if(table_rsl[n] == 2) temp_c = GET_2BIT(data[0], 5);
+	if(table_rsl[n] == 1) temp_c = GET_BITS_IN_INT(data[0], 1, 5);
+	else if(table_rsl[n] == 2) temp_c = GET_BITS_IN_INT(data[0], 2, 5);
 
 	for(int i = 0; i <= 2; ++i)
 	{
@@ -82,14 +105,14 @@ void ring_shift_left(const int n, const unsigned char data[], unsigned char resu
 	
 	for(int i = 0; i <= 2; ++i)
 	{
-		result[i] = GET_BYTE_IN_INT(temp_var, result_offset[i]);
+		result[i] = GET_BITS_IN_INT(temp_var, 8, result_offset[i]);
 	}
 	result[3] = ((temp_var & (0b11111111 >> 4) | temp_c) << 4);
 
 	temp_var = 0;
-	if(table_rsl[n] == 1) temp_c = GET_BIT(data[3], 5);
-	else if(table_rsl[n] == 2) temp_c = GET_2BIT(data[3], 5);
-	temp_var |= GET_4BIT_IN_INT(data[3], 28);
+	if(table_rsl[n] == 1) temp_c = GET_BITS_IN_INT(data[3], 1, 5);
+	else if(table_rsl[n] == 2) temp_c = GET_BITS_IN_INT(data[3], 2, 5);
+	temp_var |= GET_BITS_IN_INT(data[3], 4, 5);
 	for(int i = 4; i <= 6; ++i)
 	{
 		temp_var <<= 8;
@@ -97,10 +120,16 @@ void ring_shift_left(const int n, const unsigned char data[], unsigned char resu
 	}
 	temp_var <<= table_rsl[n];
 
-	result[3] |= GET_4BIT_IN_INT(temp_var, 4);
+	result[3] |= GET_BITS_IN_INT(temp_var, 4, 5);
 	for(int i = 4; i <= 6; ++i)
 	{
-		result[i] = GET_BYTE_IN_INT(temp_var, result_offset[i]);
+		result[i] = GET_BITS_IN_INT(temp_var, 8, result_offset[i]);
 	}
 	result[6] |= temp_c;
+}
+
+void compress_permutation(const unsigned char data[], unsigned char result[])
+{
+	const int table_cp[48] = TABLE_CP;
+	permutation(table_cp, 48, data, result);
 }
