@@ -1,5 +1,6 @@
 #include "step_definitions.h"
 #include "functions.h"
+#include "lib.h"
 #include "string.h"
 
 void encrypt(const unsigned char cleartext[], const unsigned char key[], const bool is_encrypt, unsigned char result[])
@@ -11,12 +12,7 @@ void encrypt(const unsigned char cleartext[], const unsigned char key[], const b
 	{
 		round(after_initial_permutation, key, is_encrypt, i == 0 ? true : false, left, right);
 	}
-	for(int i = 0; i < 4; ++i)
-	{
-		char tmp = after_initial_permutation[i]; 
-		after_initial_permutation[i] = after_initial_permutation[i + 4]; 
-		after_initial_permutation[i + 4] = tmp;
-	}
+	memxchg(after_initial_permutation, after_initial_permutation + 4, 4);
 	final_permutation(after_initial_permutation, result);
 }
 
